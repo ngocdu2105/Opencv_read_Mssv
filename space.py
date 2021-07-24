@@ -6,13 +6,17 @@ import utils as u
 def getTranform(approx,img):
     '''approx of contours'''
     w, h = 640, 480
-    ps1 = np.float32([approx[0][0],approx[2][0],approx[1][0],approx[3][0]]).reshape(-1, 1, 2)
-    ps2 = np.float32([[0, 0], [w, 0], [0, h], [w, h]]).reshape(-1, 1, 2)
-    M = cv2.getPerspectiveTransform(ps1, ps2)
-    dst = cv2.warpPerspective(img, M, (w, h))
-    cv2.imwrite('anhthe.png',dst)
-    cv2.imshow('anh',dst)
-    return dst
+    try:
+        ps1 = np.float32([approx[0][0], approx[2][0], approx[1][0], approx[3][0]]).reshape(-1, 1, 2)
+        ps2 = np.float32([[0, 0], [w, 0], [0, h], [w, h]]).reshape(-1, 1, 2)
+        M = cv2.getPerspectiveTransform(ps1, ps2)
+        dst = cv2.warpPerspective(img, M, (w, h))
+        cv2.imwrite('anhthe.png', dst)
+        cv2.imshow('anh', dst)
+        return dst
+    except:
+        print("list index out of range")
+
 def smooth_blur(img):
 
     #
@@ -27,7 +31,7 @@ def smooth_blur(img):
     # cv2.imshow('dilate', k)
     k=cv2.GaussianBlur(k,(7,7),2)
     # k=cv2.medianBlur(k,7)
-    cv2.imshow('gaussian',k) #150,200
+    # cv2.imshow('gaussian',k) #150,200
     # find_edges(k, kernel, img)
     return k
 def find_edges(k):
@@ -40,8 +44,8 @@ def find_edges(k):
     # findcontour(img_canny,img)ff
     # hough_line(img_canny,img)
     cv2.imshow('df',img_canny)
-    cv2.imshow('erode',k)
-    # cv2.imshow('dff',)
+    # cv2.imshow('erode',k)
+
     return img_canny
 
 def findcontour(edge,img):
@@ -65,13 +69,18 @@ def findcontour(edge,img):
     return approx
 def sort_approx(approx):
     # print(2*approx)
+    print(approx)
     k=sorted(approx,key=lambda x:(x[0][0],x[0][1]))
+    print(k)
     return k
 def test():
     img_1 = cv2.imread('Anh/anhthe3.jpg')
+    # img_1=cv2.imread('Anh/img_2.png')
 
     img_1 = cv2.resize(img_1, None, fx=0.5, fy=0.5)
     img = img_1
+    processsing(img)
+def processsing(img):
     img_blur=smooth_blur(img)
     # img_blur=main.morphologyEx(img_blur,1)
     # img_blur=
@@ -85,4 +94,4 @@ def test():
 
 
 
-test()
+# test()
