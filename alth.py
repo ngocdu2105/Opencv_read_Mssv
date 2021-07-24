@@ -162,22 +162,3 @@ def imread(s, default=1):
         return img1
 
 
-def mask_img_remove(clustedImage, img1, lables, cluster=0):
-    masked_image = np.copy(clustedImage)
-    masked_image = img1.reshape((-1, 3))
-    # masked_image=np.float32(clustedImage)
-    masked_image[lables.flatten() == cluster] = [255, 0, 0]
-    masked_image = masked_image.reshape(img1.shape)
-    cv2.imshow('remove cluters', masked_image)
-
-
-def kmean(reshapedImaged, original, numberOfClusters=2):
-    stopCriteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 100, 0.1)
-    ret, lables, clusters = cv2.kmeans(reshapedImaged, numberOfClusters, None, stopCriteria, 10,
-                                       cv2.KMEANS_RANDOM_CENTERS)
-    clusters = np.uint8(clusters)
-    print("clusters", clusters)
-    intermediateImage = clusters[lables.flatten()]
-    print("intermediteImage", lables.flatten())
-    clustedImage = intermediateImage.reshape((original.shape))
-    return clustedImage, lables
