@@ -4,10 +4,11 @@ import cv2
 import numpy as np
 import os
 import utils as u
+import time
 
 
 def find_object_flann(img_vao):
-    MIN_MATCH_COUNT = 10
+    MIN_MATCH_COUNT = 2
     img1 = cv2.imread('sample/sanple_anhthe.jpg')  # Index image
     img1 = cv2.resize(img1, dsize=(640, 480))  # img2 = cv2.pyrDown(img_vao) # training image
     img2 = img_vao
@@ -35,25 +36,10 @@ def find_object_flann(img_vao):
         h, w = img1.shape[:2]
         pts = np.float32([[0, 0], [0, h - 1], [w - 1, h - 1], [w - 1, 0]]).reshape(-1, 1, 2)
         dst = cv2.perspectiveTransform(pts, M)
-
-        # print(dst)
-        # dst=a.sort_approx(dst)
-        # anhchuyen=a.getTranform(dst,img2)
-        # u.check1(anhchuyen)
-        # print('dst:',dst)
-        # img2 = cv2.polylines(img2, [np.int32(dst)], True, 255, 3, cv2.LINE_AA)
-        cv2.imshow('Anh', img2)
         return dst
     else:
         print("Not enough matches are found - {}/{}".format(len(good), MIN_MATCH_COUNT))
         matchesMask = None
-
-    # draw_params = dict(matchColor=(0, 255, 0),  # draw matches in green color
-    #                    singlePointColor=None,
-    #                    matchesMask=matchesMask,  # draw only inliers
-    #                    flags=2)
-    # img3 = cv2.drawMatches(img1, kp1, img2, kp2, good, None, **draw_params)
-    # cv2.imshow('gray', img3)
 
 
 def load_images_from_folder(folder):
@@ -69,7 +55,7 @@ def load_images_from_folder(folder):
         return None
 
 
-def imread_result(img, k=0, path='result'):
+def imread_result(img, k=0, path='models'):
     while True:
         if os.path.isfile(path + str('/') + f'anh_result_{k:04}.png') is False:
             cv2.imwrite(path + str('/') + f'anh_result_{k:04}.png', img)
@@ -85,33 +71,76 @@ def read_nameImg(Path):
         names_file.append(filename)
     return names_file
 
-
+def create_Folder(filepath='result'):
+    import os
+    if os.path.exists(filepath):
+        file=os.listdir(filepath)
+        for file in file:
+            os.remove(filepath+str('/')+file)
+    else:
+        os.mkdir(filepath)
+start_time = time.time()
+#
+create_Folder(filepath='models')
+create_Folder()
 ten_fileImg = ['anhthe', 'Anh']
+countFile=0
+loivt=0
 for ten in ten_fileImg:
     names_file = load_images_from_folder(ten)
+    countFile +=len(names_file)
     name_file = read_nameImg(names_file)
     for index, i in enumerate(names_file):
         img = cv2.imread(i)
+
         if img is None:
             print('Khong doc duoc anh: ', name_file[index])
+            loivt +=1
             continue
         else:
-            img = cv2.pyrDown(img)
+            k=0
+            h,w=img.shape[:2]
+            if h+w >1800:
+                if h < w:
+                    k = int(567 * w / h)
+                    img = cv2.resize(img, (k, 567))
 
+                else:
+                    k = int(567 * h / w)
+                    img = cv2.resize(img, (567, k))
+
+            # 756,567
             dst = find_object_flann(img)
             dst = a.sort_approx(dst)
             anhchuyen = a.getTranform(dst, img, name_file[index])
-            # imread_result(anhchuyen)
+
             if anhchuyen is None:
                 pass
             else:
                 try:
                     u.check1(anhchuyen, name_file[index])
-                    cv2.waitKey(0)
+                    # cv2.waitKey(0)
                     cv2.destroyAllWindows()
                 except:
                     print('Loi anh {0} khi cat vi tri mssv '.format(name_file[index]))
 
+                    imread_result(anhchuyen)
+                    loivt +=1
+ketqua=load_images_from_folder('result')
+ten_ketqua=read_nameImg(ketqua)
+maloi=0
+for i in ten_ketqua:
+    maloiCount,_=i.split('_')
+    if maloiCount=='L':
+        maloi+=1
+
+accurat =float((len(ketqua)+loivt)/countFile)
+ptkn=float(maloi/countFile)
+ptocr=float((len(ketqua))/countFile)-ptkn
+print('tỉ lệ sai:{0}'.format(accurat))
+print('Ảnh không nhận dạng được {0} ảnh chiếm {1} tổng số ({2}/{3})'.format(maloi,ptkn,maloi,countFile))
+print('Ảnh nhận dạng OCR sai {0} chiếm {1} tổng số ({2}/{3})'.format(len(ketqua)-maloi,ptocr,len(ketqua)-maloi,countFile))
+print('Time: ',time.time()-start_time)
 ''' tỉ lệ đọc ảnh 100%, nhận diện chữ 73% ,
  tỉ lệ nhận diện đúng chữ  81,4%.  
  chữ không nhận diện được đa phần ảnh kém chất lượng không cải thiện được trong tổng 37 ảnh'''
